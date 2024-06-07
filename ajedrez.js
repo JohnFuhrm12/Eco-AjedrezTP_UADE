@@ -840,11 +840,11 @@ function drawBoard() {
 
             switch (piece) {
                 case 'P': 
-                    img.src = '../../images/juegos/B_Pawn.png'; 
+                    img.src = './images/B_Pawn.png'; 
                     square.appendChild(img);
                     break
                 case 'p': 
-                    img.src = '../../images/juegos/W_Pawn.png'; 
+                    img.src = './images/W_Pawn.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
                         if (!whiteInCheck) {
@@ -854,11 +854,11 @@ function drawBoard() {
                     });
                     break;
                 case 'R': 
-                    img.src = '../../images/juegos/B_Rook.png'; 
+                    img.src = './images/B_Rook.png'; 
                     square.appendChild(img);
                     break
                 case 'r': 
-                    img.src = '../../images/juegos/W_Rook.png'; 
+                    img.src = './images/W_Rook.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
                         if (!whiteInCheck) {
@@ -868,11 +868,11 @@ function drawBoard() {
                     });
                     break;
                 case 'N': 
-                    img.src = '../../images/juegos/B_Knight.png'; 
+                    img.src = './images/B_Knight.png'; 
                     square.appendChild(img);
                     break
                 case 'n': 
-                    img.src = '../../images/juegos/W_Knight.png'; 
+                    img.src = './images/W_Knight.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
                         if (!whiteInCheck) {
@@ -882,11 +882,11 @@ function drawBoard() {
                     });
                     break;
                 case 'B': 
-                    img.src = '../../images/juegos/B_Bishop.png'; 
+                    img.src = './images/B_Bishop.png'; 
                     square.appendChild(img);
                     break
                 case 'b': 
-                    img.src = '../../images/juegos/W_Bishop.png'; 
+                    img.src = './images/W_Bishop.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
                         if (!whiteInCheck) {
@@ -896,11 +896,11 @@ function drawBoard() {
                     });
                     break;
                 case 'Q': 
-                    img.src = '../../images/juegos/B_Queen.png'; 
+                    img.src = './images/B_Queen.png'; 
                     square.appendChild(img);
                     break
                 case 'q': 
-                    img.src = '../../images/juegos/W_Queen.png'; 
+                    img.src = './images/W_Queen.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
                         if (!whiteInCheck) {
@@ -910,11 +910,11 @@ function drawBoard() {
                     });
                     break;
                 case 'K': 
-                    img.src = '../../images/juegos/B_King.png'; 
+                    img.src = './images/B_King.png'; 
                     square.appendChild(img);
                     break
                 case 'k': 
-                    img.src = '../../images/juegos/W_King.png'; 
+                    img.src = './images/W_King.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
                         showValidMoves(piece, pos);
