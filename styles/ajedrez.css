@@ -1,0 +1,38 @@
+#board {
+    width: fit-content;
+    height: fit-content;
+    margin: 0 auto;
+    border: solid 6px rgb(77, 91, 54);
+  }
+  
+  .boardRow {
+    display: flex;
+    flex-direction: row;
+  }
+  
+  .square {
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    transition: 0.5s;
+  }
+  
+  .square:hover {
+    transition: 0.5s;
+    opacity: 0.6;
+  }
+  
+  .squareWhite {
+    background-color: rgb(233, 221, 200);
+  }
+  
+  .squareBlack {
+    background-color: rgb(93, 141, 93);
+
+  }
+
+  .piece {
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+  }
