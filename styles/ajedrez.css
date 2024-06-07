@@ -38,10 +38,37 @@ h1 {
   margin: 0 auto 20px;
   width: fit-content;
   font-size: 40px;
+  margin-top: -60px;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+  background-color: #ecf8d6;
+  border-radius: 20px;
+  padding: 2px 12px;
+}
+
+a:hover {
+  background-color: #d9cbff;
 }
 
 #logo {
   width: 60px;
+}
+
+#desc {
+  width: 80%;
+  margin: 0 auto;
+  margin-top: 60px;
+  margin-bottom: 100px;
+}
+
+.descItem {
+  font-size: 18px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  list-style: none;
 }
 
 #board {
@@ -80,4 +107,26 @@ h1 {
   width: 100%;
   height: 100%;
   padding: 8px;
+}
+
+@media (max-width: 750px) {
+  #desc {
+    width: 90%;
+    margin: 0 auto;
+    margin-top: 60px;
+  }
+
+  .descItem {
+    font-size: 16px;
+    max-width: 100%;
+  }
+
+  .square {
+    width: 54px;
+    height: 54px;
+  }
+
+  h1 {
+    margin-top: 0px;
+  }
 }
