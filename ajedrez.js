@@ -609,6 +609,7 @@ function removeValidMoves() {
             }
         }
     }
+    drawBoard();
     eventHandlers = [];
 }
 
