@@ -1,6 +1,6 @@
 let board = [
-    ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'], // 0
-    ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], // 1
+    [' ', ' ', ' ', ' ', 'K', ' ', ' ', ' '], // 0
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 1
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 2
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 3
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 4
@@ -13,11 +13,16 @@ let board = [
 let white = ['p', 'r', 'n', 'b', 'q', 'k'];
 let black = ['P', 'R', 'N', 'B', 'Q', 'K'];
 
+// 'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'
+// 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'
+
 let moveSound = new Audio('./audio/moveSound.mp3');
 
 let blackInCheck = false;
 let whiteInCheck = false;
 
+
+// Promote pawn to queen if found on the other side
 function promotePawns() {
     let topRow = board[0];
     let bottomRow = board[7];
@@ -39,13 +44,21 @@ function promotePawns() {
     }
 }
 
-function inCheck(board, color, futurePos) {
+// See if given king color is in check, or would be in check
+function inCheck(board, color, futurePos, useTemp) {
     let kingPosition = findKing(color, board);
     let opponentColor = (color === 'white') ? 'black' : 'white';
 
     if (futurePos !== false) {
         kingPosition = futurePos;
     }
+
+    // Pass in temp board
+    if (useTemp) {
+        useTemp = board;
+    }
+
+    console.log(kingPosition)
 
     // Check for opponent's pieces threatening the king
     for (let i = 0; i < board.length; i++) {
@@ -57,7 +70,7 @@ function inCheck(board, color, futurePos) {
                 if (color === 'white') {
                     validMoves = getValidMoves(piece, [i, j], 'black');
                 } else {
-                    validMoves = getValidMoves(piece, [i, j], 'white');
+                    validMoves = getValidMoves(piece, [i, j], 'white', useTemp);
                 }
                 for (let move of validMoves) {
                     if (move[0] === kingPosition[0] && move[1] === kingPosition[1]) {
@@ -68,17 +81,10 @@ function inCheck(board, color, futurePos) {
         }
     }
 
-    if (whiteInCheck) {
-        console.log('WHITE')
-    }
-
-    if (blackInCheck) {
-        console.log("BLACK")
-    }
-
     return false;
 }
 
+// Find the position of the given colors king
 function findKing(color) {
     let king = (color === 'white') ? 'k' : 'K';
 
@@ -91,6 +97,7 @@ function findKing(color) {
     }
 }
 
+// Find the positions of attacking threats to the king
 function findAttackers(color, kingPos) {
     let attackers = [];
     let [kingRow, kingCol] = kingPos;
@@ -118,13 +125,10 @@ function findAttackers(color, kingPos) {
         }
     }
 
-    if (attackers.length >= 2) {
-        console.log('CHECKMATE MULT ATTACKERS')
-    }
-
     return attackers;
 }
 
+// Find a straight line path between 2 pieces
 function getPathBetweenPositions(startPos, endPos) {
     let [startRow, startCol] = startPos;
     let [endRow, endCol] = endPos;
@@ -146,6 +150,7 @@ function getPathBetweenPositions(startPos, endPos) {
     return path;
 }
 
+// Have Black choose a random move, or respond to being in check
 function makeRandomMoveBlack() {
     let blackPiecesIndexes = [];
 
@@ -182,9 +187,26 @@ function makeRandomMoveBlack() {
                     let [endRow, endCol] = move;
                     if (white.includes(board[endRow][endCol])) {
                         if (endRow == attackerRow && endCol == attackerCol && canTakeAction) {
-                            canTakeAction = false;
-                            movePieceBlack(piece, startRow, startCol, endRow, endCol);
-                            return;
+                            let tempBoard = JSON.parse(JSON.stringify(board));
+                            tempBoard[endRow][endCol] = board[startRow][startCol];
+                            tempBoard[startRow][startCol] = ' ';
+
+                            // Remove attacking piece
+                            //tempBoard[attackerRow][attackerCol] = '';
+                            let usingKing = false;
+
+                            if (piece === 'K') {
+                                usingKing = [endRow, endCol];
+                            }
+
+                            console.log(tempBoard)
+
+                            if (!inCheck(tempBoard, 'black', usingKing, true) && canTakeAction) {
+                                canTakeAction = false;
+                                console.log('RAN ATTACK')
+                                movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                                return;
+                            }
                         }
                     }
                 }
@@ -199,16 +221,23 @@ function makeRandomMoveBlack() {
                 for (let i = 0; i < blackPiecesIndexes.length; i++) {
                     let [startRow, startCol] = blackPiecesIndexes[i];
                     let piece = board[startRow][startCol];
-                    let validMoves = getValidMoves(piece, [startRow, startCol], 'black');
+                    let validMoves = getValidMoves(piece, 'black');
                 
                     
                     for (let move of validMoves) {
                         let [endRow, endCol] = move;
+                        let tempBoard = JSON.parse(JSON.stringify(board));
+                        tempBoard[endRow][endCol] = board[startRow][startCol];
+                        tempBoard[startRow][startCol] = ' ';
+
                         blockableSquares.forEach((square) => {
                             if (endRow == square[0] && endCol == square[1] && piece !== 'K' && canTakeAction) {
-                                canTakeAction = false;
-                                movePieceBlack(piece, startRow, startCol, endRow, endCol);
-                                return;
+                                if (!inCheck(tempBoard, 'black', false) && canTakeAction) {
+                                    canTakeAction = false;
+                                    console.log('RAN BLOCK')
+                                    movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                                    return;
+                                }
                             } 
                         })
                     }
@@ -222,14 +251,20 @@ function makeRandomMoveBlack() {
             for (let move of validKingMoves) {
                 let [endRow, endCol] = move;
                 let tempBoard = JSON.parse(JSON.stringify(board));
-                tempBoard[endRow][endCol] = tempBoard[kingRow][kingCol];
+                tempBoard[endRow][endCol] = board[kingRow][kingCol];
                 tempBoard[kingRow][kingCol] = ' ';
+
                 if (!inCheck(tempBoard, 'black', [endRow, endCol]) && canTakeAction) {
                     canTakeAction = false;
+                    console.log('RAN RETREAT')
                     movePieceBlack(board[kingRow][kingCol], kingRow, kingCol, endRow, endCol);
                     return;
                 }
             }
+        }
+
+        if (canTakeAction) {
+            console.log("CHECKMATE NO VALID MOVES")
         }
 
     } else {
@@ -241,9 +276,16 @@ function makeRandomMoveBlack() {
 
             for (let move of validMoves) {
                 let [endRow, endCol] = move;
+                let tempBoard = JSON.parse(JSON.stringify(board));
+                tempBoard[endRow][endCol] = board[startRow][startCol];
+                tempBoard[startRow][startCol] = ' ';
+
                 if (white.includes(board[endRow][endCol])) {
-                    movePieceBlack(piece, startRow, startCol, endRow, endCol);
-                    return;
+                    if (!inCheck(tempBoard, 'black', false)) {
+                        console.log('RAN RANDOM ATTACK')
+                        movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                        return;
+                    }
                 }
             }
         }
@@ -255,15 +297,24 @@ function makeRandomMoveBlack() {
             let piece = board[startRow][startCol];
             let validMoves = getValidMoves(piece, [startRow, startCol], 'black');
             let randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+
+            console.log('RAN RANDOM')
         
             if (randomMove === undefined) {
-                console.log(randomMove)
                 makeRandomMove();
             } else {
                 let endRow = randomMove[0];
                 let endCol = randomMove[1];
-            
-                movePieceBlack(piece, startRow, startCol, endRow, endCol);
+
+                let tempBoard = JSON.parse(JSON.stringify(board));
+                tempBoard[endRow][endCol] = board[startRow][startCol];
+                tempBoard[startRow][startCol] = ' ';
+
+                if (!inCheck(tempBoard, 'black', [endRow, endCol])) {
+                    movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                } else {
+                    makeRandomMove();
+                }
             }
         }
 
@@ -271,6 +322,7 @@ function makeRandomMoveBlack() {
     }
 }
 
+// Check 4 directional sliding moves for validity
 function checkSliding(x, y, opponent, validPositions) {
     // Look Up
      for (let i = x - 1; i >= 0; i--) {
@@ -318,6 +370,7 @@ function checkSliding(x, y, opponent, validPositions) {
     }
 }
 
+// Check 4 diagonal sliding moves for validity
 function checkDiagonalSliding(x, y, opponent, validPositions) {
     // Look Up-Left
     let i = x - 1;
@@ -381,6 +434,7 @@ function checkDiagonalSliding(x, y, opponent, validPositions) {
     }
 }
 
+// Check l-shaped moves for validity
 function checkKnightMoves(x, y, opponent, validPositions) {
     // L shaped movesets
     const knightMoves = [
@@ -403,7 +457,8 @@ function checkKnightMoves(x, y, opponent, validPositions) {
     });
 }
 
-function checkPawnMoves(x, y, opponent, validPositions) {
+// Check pawn validity
+function checkPawnMoves(x, y, opponent, validPositions, tempBoard) {
     let up1 = [x - 1, y];
     let up2 = [x - 2, y];
     let down1 = [x + 1, y];
@@ -419,28 +474,56 @@ function checkPawnMoves(x, y, opponent, validPositions) {
     let diagR = opponent === black ? diagRUp : diagRDown;
     let bounds = opponent === black ? x > 0 : x < 7;
     let start = opponent === black ? 6 : 1;
+    
+    if (!tempBoard) {
+        // Check pawn possible positions
+        if (x === start) {
+            if (board[forward2[0]][forward2[1]] === ' ' && board[forward1[0]][forward1[1]] === ' ') {
+                validPositions.push(forward2);
+            }
+        }
 
-    // Check pawn possible positions
-    if (x === start) {
-        if (board[forward2[0]][forward2[1]] === ' ' && board[forward1[0]][forward1[1]] === ' ') {
-            validPositions.push(forward2);
+        if (bounds) {
+            if (board[forward1[0]][forward1[1]] === ' ') {
+                validPositions.push(forward1);
+            }
+            if (board[diagL[0]][diagL[1]] !== ' ' && opponent.includes(board[diagL[0]][diagL[1]])) {
+                validPositions.push(diagL);
+            }
+            if (board[diagR[0]][diagR[1]] !== ' ' && opponent.includes(board[diagR[0]][diagR[1]])) {
+                validPositions.push(diagR);
+            }
         }
-    }
+    } else {
+        // Check pawn possible positions
+        console.log('Using tempboard');
+        console.log(tempBoard);
 
-    if (bounds) {
-        if (board[forward1[0]][forward1[1]] === ' ') {
-            validPositions.push(forward1);
+        if (x === start) {
+            if (tempBoard[forward2[0]][forward2[1]] === ' ' && tempBoard[forward1[0]][forward1[1]] === ' ') {
+                validPositions.push(forward2);
+            }
         }
-        if (board[diagL[0]][diagL[1]] !== ' ' && opponent.includes(board[diagL[0]][diagL[1]])) {
-            validPositions.push(diagL);
+
+        if (bounds) {
+            if (tempBoard[forward1[0]][forward1[1]] === ' ') {
+                validPositions.push(forward1);
+            }
+            if (tempBoard[diagL[0]][diagL[1]] !== ' ' && opponent.includes(tempBoard[diagL[0]][diagL[1]])) {
+                validPositions.push(diagL);
+            }
+            if (tempBoard[diagR[0]][diagR[1]] !== ' ' && opponent.includes(tempBoard[diagR[0]][diagR[1]])) {
+                validPositions.push(diagR);
+            }
         }
-        if (board[diagR[0]][diagR[1]] !== ' ' && opponent.includes(board[diagR[0]][diagR[1]])) {
-            validPositions.push(diagR);
-        }
+
+        console.log(validPositions)
     }
 }
 
-function checkKingMoves(x, y, opponent, validPositions) {
+
+// Check king moves for validity
+function checkKingMoves(x, y, opponent, validPositions, color) {
     // Up down left right diagonal
     const kingMoves = [
         [x - 1, y - 1], [x - 1, y], [x - 1, y + 1],
@@ -451,13 +534,19 @@ function checkKingMoves(x, y, opponent, validPositions) {
     kingMoves.forEach(([i, j]) => {
         if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
             if (board[i][j] === ' ' || opponent.includes(board[i][j])) {
+                
+                let tempBoard = JSON.parse(JSON.stringify(board));
+                tempBoard[i][j] = board[x][y];
+                tempBoard[x][y] = ' ';
+
                 validPositions.push([i, j]);
             }
         }
     });
 }
 
-function getValidMoves(piece, pos, color) {
+// Get a list of all valid moves for a given piece and color
+function getValidMoves(piece, pos, color, tempBoard) {
     let x = pos[0];
     let y = pos[1];
 
@@ -475,10 +564,10 @@ function getValidMoves(piece, pos, color) {
 
     switch (piece) {
         case 'p': 
-            checkPawnMoves(x, y, opponent, validPositions);
+            checkPawnMoves(x, y, opponent, validPositions, tempBoard);
             break;
         case 'k':
-            checkKingMoves(x, y, opponent, validPositions)
+            checkKingMoves(x, y, opponent, validPositions, color)
             break;
         case 'n': 
             checkKnightMoves(x, y, opponent, validPositions);
@@ -498,6 +587,7 @@ function getValidMoves(piece, pos, color) {
     return validPositions;
 }
 
+// Move blacks piece and redraw board
 function movePieceBlack(piece, startRow, startCol, endRow, endCol) {
     let isValid = true;
 
@@ -512,6 +602,7 @@ function movePieceBlack(piece, startRow, startCol, endRow, endCol) {
     }
 }
 
+// Move the piece and draw the board again, add delay
 function movePiece(piece, startRow, startCol, endRow, endCol) {
     let isValid = true;
 
@@ -529,14 +620,17 @@ function movePiece(piece, startRow, startCol, endRow, endCol) {
     }
 }
 
+// Event handlers to later remove
 let eventHandlers = [];
 
+// Add on click, to move to that square and then clear
 function handleValidPosClick(newPosStr, x, y, piece) {
     let newPos = [Number(newPosStr[0]), Number(newPosStr[2])];
     movePiece(piece, x, y, newPos[0], newPos[1]);
     removeValidMoves();
 }
 
+// We need this to be able to remove click events later
 function handleValidPosClickHandler(squareId, x, y, piece) {
     function clickHandler() {
         handleValidPosClick(squareId, x, y, piece);
@@ -545,6 +639,8 @@ function handleValidPosClickHandler(squareId, x, y, piece) {
     return clickHandler;
 }
 
+
+// Check all valid moves, if valid, highlight all valid move squares
 function showValidMoves(piece, pos) {
     removeValidMoves();
     let x = pos[0];
@@ -591,6 +687,8 @@ function showValidMoves(piece, pos) {
     }
 }
 
+
+// Remove move highlights and invalidate those squares as valid moves
 function removeValidMoves() {
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
@@ -613,8 +711,9 @@ function removeValidMoves() {
     eventHandlers = [];
 }
 
+// Loop through board array and draw in the pieces, check if in check and if a pawn can be promoted
 function drawBoard() {
-    whiteInCheck = inCheck(board, 'white', false);
+    // whiteInCheck = inCheck(board, 'white', false);
     blackInCheck = inCheck(board, 'black', false);
     promotePawns();
     // console.log(`White: ${whiteInCheck}`);
