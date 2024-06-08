@@ -34,9 +34,9 @@ function inCheck(board, color, futurePos) {
             if (piece !== ' ' && (opponentColor === 'white' ? white.includes(piece) : black.includes(piece))) {
                 let validMoves = null;
                 if (color === 'white') {
-                    validMoves = getValidMovesBlack(piece, [i, j], board);
+                    validMoves = getValidMoves(piece, [i, j], 'black');
                 } else {
-                    validMoves = getValidMovesWhite(piece, [i, j], board);
+                    validMoves = getValidMoves(piece, [i, j], 'white');
                 }
                 for (let move of validMoves) {
                     if (move[0] === kingPosition[0] && move[1] === kingPosition[1]) {
@@ -60,12 +60,6 @@ function findKing(color) {
             }
         }
     }
-}
-
-function checkValidity(piece, startRow, startCol, endRow, endCol) {
-    let square = document.getElementById(`${endRow}-${endCol}`);
-
-    return true;
 }
 
 function makeRandomMoveBlack() {
@@ -93,7 +87,7 @@ function makeRandomMoveBlack() {
         startCol = kingLoc[1];
     }
 
-    let validMoves = getValidMovesBlack(pieceType, randomPiece, board, white);
+    let validMoves = getValidMoves(pieceType, randomPiece, 'black');
 
     let randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
     if (randomMove === undefined) {
@@ -116,9 +110,8 @@ function makeRandomMoveBlack() {
         // If in check, see if move puts king in check
         if (blackInCheck) {
             validMoves.forEach((move) => {
-                console.log(validMoves)
                 let check = inCheck(board, 'black', move);
-                console.log(`Would be in Check: ${check}, Move: ${move}`)
+                //console.log(`Would be in Check: ${check}, Move: ${move}`)
                 if (!check) {
                     let x = move[0];
                     let y = move[1];
@@ -130,404 +123,228 @@ function makeRandomMoveBlack() {
             });
         }
 
-        // Right now if the king doesn't find a move to not be in check, he does the random move anyway - checkmate
-        // Need to check if other pieces can block
-        // But checking if it would put him in check is correct at least
-
         movePieceBlack(pieceType, startRow, startCol, endRow, endCol)
     }
 }
 
-function getValidMovesBlack(piece, pos) {
-    let x = pos[0];
-    let y = pos[1];
-
-    let validPositions = [];
-
-    function checkSliding() {
-        // Look Up
-         for (let i = x - 1; i >= 0; i--) {
-            if (board[i][y] === ' ') {
-                validPositions.push([i, y]);
-            } else if (white.includes(board[i][y])) {
-                validPositions.push([i, y]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look down
-        for (let i = x + 1; i <= 7; i++) {
-            if (board[i][y] === ' ') {
-                validPositions.push([i, y]);
-            } else if (white.includes(board[i][y])) {
-                validPositions.push([i, y]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look left
-        for (let i = y - 1; i >= 0; i--) {
-            if (board[x][i] === ' ') {
-                validPositions.push([x, i]);
-            } else if (white.includes(board[x][i])) {
-                validPositions.push([x, i]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look right
-        for (let i = y + 1; i <= 7; i++) {
-            if (board[x][i] === ' ') {
-                validPositions.push([x, i]);
-            } else if (white.includes(board[x][i])) {
-                validPositions.push([x, i]);
-                break;
-            } else {
-                break;
-            }
+function checkSliding(x, y, opponent, validPositions) {
+    // Look Up
+     for (let i = x - 1; i >= 0; i--) {
+        if (board[i][y] === ' ') {
+            validPositions.push([i, y]);
+        } else if (opponent.includes(board[i][y])) {
+            validPositions.push([i, y]);
+            break;
+        } else {
+            break;
         }
     }
-
-    function checkDiagonalSliding() {
-        // Look Up-Left
-        let i = x - 1;
-        let j = y - 1;
-        while (i >= 0 && j >= 0) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (white.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i--;
-            j--;
-        }
-
-        // Look Up-Right
-        i = x - 1;
-        j = y + 1;
-        while (i >= 0 && j <= 7) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (white.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i--;
-            j++;
-        }
-
-        // Look Down-Left
-        i = x + 1;
-        j = y - 1;
-        while (i <= 7 && j >= 0) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (white.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i++;
-            j--;
-        }
-
-        // Look Down-Right
-        i = x + 1;
-        j = y + 1;
-        while (i <= 7 && j <= 7) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (white.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i++;
-            j++;
+    // Look down
+    for (let i = x + 1; i <= 7; i++) {
+        if (board[i][y] === ' ') {
+            validPositions.push([i, y]);
+        } else if (opponent.includes(board[i][y])) {
+            validPositions.push([i, y]);
+            break;
+        } else {
+            break;
         }
     }
-
-    function checkKnightMoves() {
-        // L shaped movesets
-        const knightMoves = [
-            [x - 2, y - 1],
-            [x - 2, y + 1],
-            [x - 1, y - 2],
-            [x - 1, y + 2],
-            [x + 1, y - 2],
-            [x + 1, y + 2],
-            [x + 2, y - 1],
-            [x + 2, y + 1]
-        ];
-    
-        knightMoves.forEach(([i, j]) => {
-            if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
-                if (board[i][j] === ' ' || white.includes(board[i][j])) {
-                    validPositions.push([i, j]);
-                }
-            }
-        });
+    // Look left
+    for (let i = y - 1; i >= 0; i--) {
+        if (board[x][i] === ' ') {
+            validPositions.push([x, i]);
+        } else if (opponent.includes(board[x][i])) {
+            validPositions.push([x, i]);
+            break;
+        } else {
+            break;
+        }
     }
-
-    switch (piece) {
-        case 'P': 
-            let down1 = [x + 1, y];
-            let down2 = [x + 2, y];
-            let diagL = [x + 1, y + 1];
-            let diagR = [x + 1, y - 1];
-
-            // Check pawn possible positions
-            if (board[down1[0]][down1[1]] === ' ') {
-                validPositions.push(down1);
-            }
-            if (x < 6) { // Check if out of bounds
-                if (board[down2[0]][down2[1]] === ' ' && board[down1[0]][down1[1]] === ' ' && x === 1) {
-                    validPositions.push(down2);
-                }
-            }
-            if (board[diagL[0]][diagL[1]] !== ' ' && white.includes(board[diagL[0]][diagL[1]])) {
-                validPositions.push(diagL);
-            }
-            if (board[diagR[0]][diagR[1]] !== ' ' && white.includes(board[diagR[0]][diagR[1]])) {
-                validPositions.push(diagR);
-            }
+    // Look right
+    for (let i = y + 1; i <= 7; i++) {
+        if (board[x][i] === ' ') {
+            validPositions.push([x, i]);
+        } else if (opponent.includes(board[x][i])) {
+            validPositions.push([x, i]);
             break;
-        case 'K':
-            // Up down left right diagonal
-            const kingMoves = [
-                [x - 1, y - 1], [x - 1, y], [x - 1, y + 1],
-                [x, y - 1],                     [x, y + 1],
-                [x + 1, y - 1], [x + 1, y], [x + 1, y + 1]
-            ];
-    
-            kingMoves.forEach(([i, j]) => {
-                if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
-                    if (board[i][j] === ' ' || white.includes(board[i][j])) {
-                        validPositions.push([i, j]);
-                    }
-                }
-            });
+        } else {
             break;
-        case 'N': 
-            checkKnightMoves();
-            break;
-        case 'R':
-            checkSliding();
-            break;
-        case 'B':
-            checkDiagonalSliding();
-            break;
-        case 'Q':
-            checkSliding();
-            checkDiagonalSliding();
-            break;
+        }
     }
-
-    return validPositions;
 }
 
-function getValidMovesWhite(piece, pos) {
+function checkDiagonalSliding(x, y, opponent, validPositions) {
+    // Look Up-Left
+    let i = x - 1;
+    let j = y - 1;
+    while (i >= 0 && j >= 0) {
+        if (board[i][j] === ' ') {
+            validPositions.push([i, j]);
+        } else if (opponent.includes(board[i][j])) {
+            validPositions.push([i, j]);
+            break;
+        } else {
+            break;
+        }
+        i--;
+        j--;
+    }
+    // Look Up-Right
+    i = x - 1;
+    j = y + 1;
+    while (i >= 0 && j <= 7) {
+        if (board[i][j] === ' ') {
+            validPositions.push([i, j]);
+        } else if (opponent.includes(board[i][j])) {
+            validPositions.push([i, j]);
+            break;
+        } else {
+            break;
+        }
+        i--;
+        j++;
+    }
+    // Look Down-Left
+    i = x + 1;
+    j = y - 1;
+    while (i <= 7 && j >= 0) {
+        if (board[i][j] === ' ') {
+            validPositions.push([i, j]);
+        } else if (opponent.includes(board[i][j])) {
+            validPositions.push([i, j]);
+            break;
+        } else {
+            break;
+        }
+        i++;
+        j--;
+    }
+    // Look Down-Right
+    i = x + 1;
+    j = y + 1;
+    while (i <= 7 && j <= 7) {
+        if (board[i][j] === ' ') {
+            validPositions.push([i, j]);
+        } else if (opponent.includes(board[i][j])) {
+            validPositions.push([i, j]);
+            break;
+        } else {
+            break;
+        }
+        i++;
+        j++;
+    }
+}
+
+function checkKnightMoves(x, y, opponent, validPositions) {
+    // L shaped movesets
+    const knightMoves = [
+        [x - 2, y - 1],
+        [x - 2, y + 1],
+        [x - 1, y - 2],
+        [x - 1, y + 2],
+        [x + 1, y - 2],
+        [x + 1, y + 2],
+        [x + 2, y - 1],
+        [x + 2, y + 1]
+    ];
+
+    knightMoves.forEach(([i, j]) => {
+        if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
+            if (board[i][j] === ' ' || opponent.includes(board[i][j])) {
+                validPositions.push([i, j]);
+            }
+        }
+    });
+}
+
+function checkPawnMoves(x, y, opponent, validPositions) {
+    let up1 = [x - 1, y];
+    let up2 = [x - 2, y];
+    let down1 = [x + 1, y];
+    let down2 = [x + 2, y];
+    let diagLUp = [x - 1, y - 1];
+    let diagRUp = [x - 1, y + 1];
+    let diagLDown = [x + 1, y + 1];
+    let diagRDown = [x + 1, y - 1];
+
+    let forward1 = opponent === black ? up1 : down1;
+    let forward2 = opponent === black ? up2 : down2;
+    let diagL = opponent === black ? diagLUp : diagLDown;
+    let diagR = opponent === black ? diagRUp : diagRDown;
+    let bounds = opponent === black ? x > 1 : x < 6;
+    let start = opponent === black ? 6 : 1;
+
+    // Check pawn possible positions
+    if (board[forward1[0]][forward1[1]] === ' ') {
+        validPositions.push(forward1);
+    }
+    if (bounds) { // Check if out of bounds
+        if (board[forward2[0]][forward2[1]] === ' ' && board[forward1[0]][forward1[1]] === ' ' && x === start) {
+            validPositions.push(forward2);
+        }
+    }
+    if (board[diagL[0]][diagL[1]] !== ' ' && opponent.includes(board[diagL[0]][diagL[1]])) {
+        validPositions.push(diagL);
+    }
+    if (board[diagR[0]][diagR[1]] !== ' ' && opponent.includes(board[diagR[0]][diagR[1]])) {
+        validPositions.push(diagR);
+    }
+}
+
+function checkKingMoves(x, y, opponent, validPositions) {
+    // Up down left right diagonal
+    const kingMoves = [
+        [x - 1, y - 1], [x - 1, y], [x - 1, y + 1],
+        [x, y - 1], [x, y + 1], [x + 1, y - 1], 
+        [x + 1, y], [x + 1, y + 1]
+    ];
+
+    kingMoves.forEach(([i, j]) => {
+        if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
+            if (board[i][j] === ' ' || opponent.includes(board[i][j])) {
+                validPositions.push([i, j]);
+            }
+        }
+    });
+}
+
+function getValidMoves(piece, pos, color) {
     let x = pos[0];
     let y = pos[1];
 
+    let opponent = null;
+
+    if (color === 'white') {
+        opponent = black;
+    } else {
+        opponent = white;
+    }
+
+    piece = piece.toLowerCase();
+
     let validPositions = [];
-
-    function checkSliding() {
-        // Look Up
-         for (let i = x - 1; i >= 0; i--) {
-            if (board[i][y] === ' ') {
-                validPositions.push([i, y]);
-            } else if (black.includes(board[i][y])) {
-                validPositions.push([i, y]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look down
-        for (let i = x + 1; i <= 7; i++) {
-            if (board[i][y] === ' ') {
-                validPositions.push([i, y]);
-            } else if (black.includes(board[i][y])) {
-                validPositions.push([i, y]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look left
-        for (let i = y - 1; i >= 0; i--) {
-            if (board[x][i] === ' ') {
-                validPositions.push([x, i]);
-            } else if (black.includes(board[x][i])) {
-                validPositions.push([x, i]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look right
-        for (let i = y + 1; i <= 7; i++) {
-            if (board[x][i] === ' ') {
-                validPositions.push([x, i]);
-            } else if (black.includes(board[x][i])) {
-                validPositions.push([x, i]);
-                break;
-            } else {
-                break;
-            }
-        }
-    }
-
-    function checkDiagonalSliding() {
-        // Look Up-Left
-        let i = x - 1;
-        let j = y - 1;
-        while (i >= 0 && j >= 0) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i--;
-            j--;
-        }
-
-        // Look Up-Right
-        i = x - 1;
-        j = y + 1;
-        while (i >= 0 && j <= 7) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i--;
-            j++;
-        }
-
-        // Look Down-Left
-        i = x + 1;
-        j = y - 1;
-        while (i <= 7 && j >= 0) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i++;
-            j--;
-        }
-
-        // Look Down-Right
-        i = x + 1;
-        j = y + 1;
-        while (i <= 7 && j <= 7) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i++;
-            j++;
-        }
-    }
-
-    function checkKnightMoves() {
-        // L shaped movesets
-        const knightMoves = [
-            [x - 2, y - 1],
-            [x - 2, y + 1],
-            [x - 1, y - 2],
-            [x - 1, y + 2],
-            [x + 1, y - 2],
-            [x + 1, y + 2],
-            [x + 2, y - 1],
-            [x + 2, y + 1]
-        ];
-    
-        knightMoves.forEach(([i, j]) => {
-            if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
-                if (board[i][j] === ' ' || black.includes(board[i][j])) {
-                    validPositions.push([i, j]);
-                }
-            }
-        });
-    }
 
     switch (piece) {
         case 'p': 
-            let up1 = [x - 1, y];
-            let up2 = [x - 2, y];
-            let diagL = [x - 1, y - 1];
-            let diagR = [x - 1, y + 1];
-
-            // Check pawn possible positions
-            if (board[up1[0]][up1[1]] === ' ') {
-                validPositions.push(up1);
-            }
-            if (x > 1) { // Check if out of bounds
-                if (board[up2[0]][up2[1]] === ' ' && board[up1[0]][up1[1]] === ' ' && x === 6) {
-                    validPositions.push(up2);
-                }
-            }
-            if (board[diagL[0]][diagL[1]] !== ' ' && black.includes(board[diagL[0]][diagL[1]])) {
-                validPositions.push(diagL);
-            }
-            if (board[diagR[0]][diagR[1]] !== ' ' && black.includes(board[diagR[0]][diagR[1]])) {
-                validPositions.push(diagR);
-            }
+            checkPawnMoves(x, y, opponent, validPositions);
             break;
         case 'k':
-            // Up down left right diagonal
-            const kingMoves = [
-                [x - 1, y - 1], [x - 1, y], [x - 1, y + 1],
-                [x, y - 1],                     [x, y + 1],
-                [x + 1, y - 1], [x + 1, y], [x + 1, y + 1]
-            ];
-
-            kingMoves.forEach(([i, j]) => {
-                if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
-                    if (board[i][j] === ' ' || black.includes(board[i][j])) {
-                        validPositions.push([i, j]);
-                    }
-                }
-            });
+            checkKingMoves(x, y, opponent, validPositions)
             break;
         case 'n': 
-            checkKnightMoves();
+            checkKnightMoves(x, y, opponent, validPositions);
             break;
         case 'r':
-            checkSliding();
+            checkSliding(x, y, opponent, validPositions);
             break;
         case 'b':
-            checkDiagonalSliding();
+            checkDiagonalSliding(x, y, opponent, validPositions);
             break;
         case 'q':
-            checkSliding();
-            checkDiagonalSliding();
+            checkSliding(x, y, opponent, validPositions);
+            checkDiagonalSliding(x, y, opponent, validPositions);
             break;
     }
 
@@ -535,7 +352,7 @@ function getValidMovesWhite(piece, pos) {
 }
 
 function movePieceBlack(piece, startRow, startCol, endRow, endCol) {
-    let isValid = checkValidity(piece, startRow, startCol, endRow, endCol);
+    let isValid = true;
 
     if (isValid) {
         board[startRow][startCol] = ' ';
@@ -549,7 +366,7 @@ function movePieceBlack(piece, startRow, startCol, endRow, endCol) {
 }
 
 function movePiece(piece, startRow, startCol, endRow, endCol) {
-    let isValid = checkValidity(piece, startRow, startCol, endRow, endCol);
+    let isValid = true;
 
     if (isValid) {
         board[startRow][startCol] = ' ';
@@ -585,6 +402,7 @@ function showValidMoves(piece, pos) {
     removeValidMoves();
     let x = pos[0];
     let y = pos[1];
+    let opponent = black;
 
     function highlightValid(validPositions) {
         validPositions.forEach((position) => {
@@ -597,205 +415,30 @@ function showValidMoves(piece, pos) {
 
     let validPositions = [];
 
-    function checkSliding() {
-        // Look Up
-         for (let i = x - 1; i >= 0; i--) {
-            if (board[i][y] === ' ') {
-                validPositions.push([i, y]);
-            } else if (black.includes(board[i][y])) {
-                validPositions.push([i, y]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look down
-        for (let i = x + 1; i <= 7; i++) {
-            if (board[i][y] === ' ') {
-                validPositions.push([i, y]);
-            } else if (black.includes(board[i][y])) {
-                validPositions.push([i, y]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look left
-        for (let i = y - 1; i >= 0; i--) {
-            if (board[x][i] === ' ') {
-                validPositions.push([x, i]);
-            } else if (black.includes(board[x][i])) {
-                validPositions.push([x, i]);
-                break;
-            } else {
-                break;
-            }
-        }
-        // Look right
-        for (let i = y + 1; i <= 7; i++) {
-            if (board[x][i] === ' ') {
-                validPositions.push([x, i]);
-            } else if (black.includes(board[x][i])) {
-                validPositions.push([x, i]);
-                break;
-            } else {
-                break;
-            }
-        }
-    }
-
-    function checkDiagonalSliding() {
-        // Look Up-Left
-        let i = x - 1;
-        let j = y - 1;
-        while (i >= 0 && j >= 0) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i--;
-            j--;
-        }
-
-        // Look Up-Right
-        i = x - 1;
-        j = y + 1;
-        while (i >= 0 && j <= 7) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i--;
-            j++;
-        }
-
-        // Look Down-Left
-        i = x + 1;
-        j = y - 1;
-        while (i <= 7 && j >= 0) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i++;
-            j--;
-        }
-
-        // Look Down-Right
-        i = x + 1;
-        j = y + 1;
-        while (i <= 7 && j <= 7) {
-            if (board[i][j] === ' ') {
-                validPositions.push([i, j]);
-            } else if (black.includes(board[i][j])) {
-                validPositions.push([i, j]);
-                break;
-            } else {
-                break;
-            }
-            i++;
-            j++;
-        }
-    }
-
-    function checkKnightMoves() {
-        // L shaped movesets
-        const knightMoves = [
-            [x - 2, y - 1],
-            [x - 2, y + 1],
-            [x - 1, y - 2],
-            [x - 1, y + 2],
-            [x + 1, y - 2],
-            [x + 1, y + 2],
-            [x + 2, y - 1],
-            [x + 2, y + 1]
-        ];
-    
-        knightMoves.forEach(([i, j]) => {
-            if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
-                if (board[i][j] === ' ' || black.includes(board[i][j])) {
-                    validPositions.push([i, j]);
-                }
-            }
-        });
-    }
-
     switch (piece) {
         case 'p': 
-            let up1 = [x - 1, y];
-            let up2 = [x - 2, y];
-            let diagL = [x - 1, y - 1];
-            let diagR = [x - 1, y + 1];
-
-            // Check pawn possible positions
-            if (board[up1[0]][up1[1]] === ' ') {
-                validPositions.push(up1);
-            }
-            if (x > 1) { // Check if out of bounds
-                if (board[up2[0]][up2[1]] === ' ' && board[up1[0]][up1[1]] === ' ' && x === 6) {
-                    validPositions.push(up2);
-                }
-            }
-            if (board[diagL[0]][diagL[1]] !== ' ' && black.includes(board[diagL[0]][diagL[1]])) {
-                validPositions.push(diagL);
-            }
-            if (board[diagR[0]][diagR[1]] !== ' ' && black.includes(board[diagR[0]][diagR[1]])) {
-                validPositions.push(diagR);
-            }
+            checkPawnMoves(x, y, opponent, validPositions)
             highlightValid(validPositions);
             break;
         case 'k':
-            // Up down left right diagonal
-            const kingMoves = [
-                [x - 1, y - 1], [x - 1, y], [x - 1, y + 1],
-                [x, y - 1],                     [x, y + 1],
-                [x + 1, y - 1], [x + 1, y], [x + 1, y + 1]
-            ];
-
-            kingMoves.forEach(([i, j]) => {
-                if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
-                    let tempboard = JSON.parse(JSON.stringify(board));
-                    tempboard[i][j] = 'k';
-                    tempboard[x][y] = ' ';
-                    console.log(tempboard)
-                    let check = inCheck(tempboard, 'white', [i, j]);
-                    console.log(check, [i, j]);
-                    if (board[i][j] === ' ' || black.includes(board[i][j])) {
-                        if (!check) {
-                            validPositions.push([i, j]);
-                        }
-                    }
-                }
-            });
+            checkKingMoves(x, y, opponent, validPositions);
             highlightValid(validPositions);
             break;
         case 'n': 
-            checkKnightMoves();
+            checkKnightMoves(x, y, opponent, validPositions);
             highlightValid(validPositions);
             break;
         case 'r':
-            checkSliding();
+            checkSliding(x, y, opponent, validPositions);
             highlightValid(validPositions);
             break;
         case 'b':
-            checkDiagonalSliding();
+            checkDiagonalSliding(x, y, opponent, validPositions);
             highlightValid(validPositions);
             break;
         case 'q':
-            checkSliding();
-            checkDiagonalSliding();
+            checkSliding(x, y, opponent, validPositions);
+            checkDiagonalSliding(x, y, opponent, validPositions);
             highlightValid(validPositions);
             break;
     }
@@ -823,10 +466,10 @@ function removeValidMoves() {
 }
 
 function drawBoard() {
-    whiteInCheck = inCheck(board, 'white', false);
-    blackInCheck = inCheck(board, 'black', false);
-    console.log(`White: ${whiteInCheck}`);
-    console.log(`Black ${blackInCheck}`)
+    //whiteInCheck = inCheck(board, 'white', false);
+    //blackInCheck = inCheck(board, 'black', false);
+    //console.log(`White: ${whiteInCheck}`);
+    //console.log(`Black ${blackInCheck}`)
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
             let piece = board[i][j];
