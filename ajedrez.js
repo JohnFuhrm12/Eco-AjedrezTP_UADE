@@ -104,6 +104,27 @@ function findAttackers(color, kingPos) {
     return attackers;
 }
 
+function getPathBetweenPositions(startPos, endPos) {
+    let [startRow, startCol] = startPos;
+    let [endRow, endCol] = endPos;
+    let path = [];
+
+    // Determine direction of movement
+    let rowDirection = Math.sign(endRow - startRow);
+    let colDirection = Math.sign(endCol - startCol);
+
+    // Add positions between start and end positions
+    let row = startRow + rowDirection;
+    let col = startCol + colDirection;
+    while (row !== endRow || col !== endCol) {
+        path.push([row, col]);
+        row += rowDirection;
+        col += colDirection;
+    }
+
+    return path;
+}
+
 function makeRandomMoveBlack() {
     let blackPiecesIndexes = [];
 
@@ -122,7 +143,33 @@ function makeRandomMoveBlack() {
         let [kingRow, kingCol] = kingPos;
 
         // Try blocking the check
+        function attemptBlock() {
+            let attackers = findAttackers('black', kingPos);
+            let attacker = attackers[0];
 
+            // No way to block knights
+            if (board[attacker[0]][attacker[1]] !== 'n') {
+                let blockableSquares = getPathBetweenPositions(attacker, kingPos);
+
+                for (let i = 0; i < blackPiecesIndexes.length; i++) {
+                    let [startRow, startCol] = blackPiecesIndexes[i];
+                    let piece = board[startRow][startCol];
+                    let validMoves = getValidMoves(piece, [startRow, startCol], 'black');
+            
+                    for (let move of validMoves) {
+                        let [endRow, endCol] = move;
+                            blockableSquares.forEach((square) => {
+                                if (endRow == square[0] && endCol == square[1] && piece !== 'K') {
+                                    movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                                    return;
+                                } 
+                            })
+                    }
+                }
+            }
+        }
+
+        attemptBlock() 
 
         // Try capturing the attacking piece
         let attackers = findAttackers('black', kingPos);
@@ -137,12 +184,11 @@ function makeRandomMoveBlack() {
     
             for (let move of validMoves) {
                 let [endRow, endCol] = move;
-                console.log(attacker)
-                console.log(attackerRow, attackerCol)
                 if (white.includes(board[endRow][endCol])) {
-                    if (endRow == attackerRow && endCol == attackerCol)
-                    movePieceBlack(piece, startRow, startCol, endRow, endCol);
-                    return;
+                    if (endRow == attackerRow && endCol == attackerCol) {
+                        movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                        return;
+                    }
                 }
             }
         }
