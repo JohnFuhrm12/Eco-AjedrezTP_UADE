@@ -32,13 +32,15 @@ footer {
 
 main {
   margin-bottom: 60px;
+  text-align: center;
 }
 
 h1 {
-  margin: 0 auto 20px;
+  margin: 0 auto;
   width: fit-content;
   font-size: 40px;
   margin-top: -60px;
+  margin-bottom: 10px;
 }
 
 a {
@@ -70,6 +72,7 @@ a:hover {
   margin: 0 auto;
   margin-top: 60px;
   margin-bottom: 100px;
+  text-align: left;
 }
 
 .descItem {
@@ -77,6 +80,10 @@ a:hover {
   margin-top: 20px;
   margin-bottom: 20px;
   list-style: none;
+}
+
+#status {
+  margin-bottom: 20px;
 }
 
 #board {

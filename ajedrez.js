@@ -1,6 +1,6 @@
 let board = [
-    [' ', ' ', ' ', ' ', 'K', ' ', ' ', ' '], // 0
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 1
+    ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'], // 0
+    ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'], // 1
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 2
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 3
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // 4
@@ -12,6 +12,9 @@ let board = [
 
 let white = ['p', 'r', 'n', 'b', 'q', 'k'];
 let black = ['P', 'R', 'N', 'B', 'Q', 'K'];
+
+let checkmate = false;
+let winner = null;
 
 // 'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'
 // 'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'
@@ -57,8 +60,6 @@ function inCheck(board, color, futurePos, useTemp) {
     if (useTemp) {
         useTemp = board;
     }
-
-    console.log(kingPosition)
 
     // Check for opponent's pieces threatening the king
     for (let i = 0; i < board.length; i++) {
@@ -191,17 +192,16 @@ function makeRandomMoveBlack() {
                             tempBoard[endRow][endCol] = board[startRow][startCol];
                             tempBoard[startRow][startCol] = ' ';
 
-                            // Remove attacking piece
-                            //tempBoard[attackerRow][attackerCol] = '';
+                            // If using King use temp
                             let usingKing = false;
+                            let usingTemp = false;
 
                             if (piece === 'K') {
                                 usingKing = [endRow, endCol];
+                                usingTemp = true;
                             }
 
-                            console.log(tempBoard)
-
-                            if (!inCheck(tempBoard, 'black', usingKing, true) && canTakeAction) {
+                            if (!inCheck(tempBoard, 'black', usingKing, usingTemp) && canTakeAction) {
                                 canTakeAction = false;
                                 console.log('RAN ATTACK')
                                 movePieceBlack(piece, startRow, startCol, endRow, endCol);
@@ -254,7 +254,9 @@ function makeRandomMoveBlack() {
                 tempBoard[endRow][endCol] = board[kingRow][kingCol];
                 tempBoard[kingRow][kingCol] = ' ';
 
-                if (!inCheck(tempBoard, 'black', [endRow, endCol]) && canTakeAction) {
+                let usingTemp = true;
+
+                if (!inCheck(tempBoard, 'black', [endRow, endCol], usingTemp) && canTakeAction) {
                     canTakeAction = false;
                     console.log('RAN RETREAT')
                     movePieceBlack(board[kingRow][kingCol], kingRow, kingCol, endRow, endCol);
@@ -263,8 +265,11 @@ function makeRandomMoveBlack() {
             }
         }
 
+        // Black in checkmate
         if (canTakeAction) {
-            console.log("CHECKMATE NO VALID MOVES")
+            checkmate = true;
+            winner = 'White';
+            drawBoard();
         }
 
     } else {
@@ -280,8 +285,18 @@ function makeRandomMoveBlack() {
                 tempBoard[endRow][endCol] = board[startRow][startCol];
                 tempBoard[startRow][startCol] = ' ';
 
+                
+                // If using King use temp
+                let usingKing = false;
+                let usingTemp = false;
+
+                if (piece === 'K') {
+                    usingKing = [endRow, endCol];
+                    usingTemp = true;
+                }
+
                 if (white.includes(board[endRow][endCol])) {
-                    if (!inCheck(tempBoard, 'black', false)) {
+                    if (!inCheck(tempBoard, 'black', usingKing, usingTemp)) {
                         console.log('RAN RANDOM ATTACK')
                         movePieceBlack(piece, startRow, startCol, endRow, endCol);
                         return;
@@ -310,7 +325,16 @@ function makeRandomMoveBlack() {
                 tempBoard[endRow][endCol] = board[startRow][startCol];
                 tempBoard[startRow][startCol] = ' ';
 
-                if (!inCheck(tempBoard, 'black', [endRow, endCol])) {
+                // If using King use temp
+                let usingKing = false;
+                let usingTemp = false;
+
+                if (piece === 'K') {
+                    usingKing = [endRow, endCol];
+                    usingTemp = true;
+                }
+
+                if (!inCheck(tempBoard, 'black', usingKing, usingTemp)) {
                     movePieceBlack(piece, startRow, startCol, endRow, endCol);
                 } else {
                     makeRandomMove();
@@ -323,12 +347,17 @@ function makeRandomMoveBlack() {
 }
 
 // Check 4 directional sliding moves for validity
-function checkSliding(x, y, opponent, validPositions) {
+function checkSliding(x, y, opponent, validPositions, tempBoard) {
+    let boardToCheck = board;
+    if (tempBoard) {
+        boardToCheck = tempBoard;
+    }
+
     // Look Up
      for (let i = x - 1; i >= 0; i--) {
-        if (board[i][y] === ' ') {
+        if (boardToCheck[i][y] === ' ') {
             validPositions.push([i, y]);
-        } else if (opponent.includes(board[i][y])) {
+        } else if (opponent.includes(boardToCheck[i][y])) {
             validPositions.push([i, y]);
             break;
         } else {
@@ -337,9 +366,9 @@ function checkSliding(x, y, opponent, validPositions) {
     }
     // Look down
     for (let i = x + 1; i <= 7; i++) {
-        if (board[i][y] === ' ') {
+        if (boardToCheck[i][y] === ' ') {
             validPositions.push([i, y]);
-        } else if (opponent.includes(board[i][y])) {
+        } else if (opponent.includes(boardToCheck[i][y])) {
             validPositions.push([i, y]);
             break;
         } else {
@@ -348,9 +377,9 @@ function checkSliding(x, y, opponent, validPositions) {
     }
     // Look left
     for (let i = y - 1; i >= 0; i--) {
-        if (board[x][i] === ' ') {
+        if (boardToCheck[x][i] === ' ') {
             validPositions.push([x, i]);
-        } else if (opponent.includes(board[x][i])) {
+        } else if (opponent.includes(boardToCheck[x][i])) {
             validPositions.push([x, i]);
             break;
         } else {
@@ -359,9 +388,9 @@ function checkSliding(x, y, opponent, validPositions) {
     }
     // Look right
     for (let i = y + 1; i <= 7; i++) {
-        if (board[x][i] === ' ') {
+        if (boardToCheck[x][i] === ' ') {
             validPositions.push([x, i]);
-        } else if (opponent.includes(board[x][i])) {
+        } else if (opponent.includes(boardToCheck[x][i])) {
             validPositions.push([x, i]);
             break;
         } else {
@@ -371,14 +400,19 @@ function checkSliding(x, y, opponent, validPositions) {
 }
 
 // Check 4 diagonal sliding moves for validity
-function checkDiagonalSliding(x, y, opponent, validPositions) {
+function checkDiagonalSliding(x, y, opponent, validPositions, tempBoard) {
+    let boardToCheck = board;
+    if (tempBoard) {
+        boardToCheck = tempBoard;
+    }
+
     // Look Up-Left
     let i = x - 1;
     let j = y - 1;
     while (i >= 0 && j >= 0) {
-        if (board[i][j] === ' ') {
+        if (boardToCheck[i][j] === ' ') {
             validPositions.push([i, j]);
-        } else if (opponent.includes(board[i][j])) {
+        } else if (opponent.includes(boardToCheck[i][j])) {
             validPositions.push([i, j]);
             break;
         } else {
@@ -391,9 +425,9 @@ function checkDiagonalSliding(x, y, opponent, validPositions) {
     i = x - 1;
     j = y + 1;
     while (i >= 0 && j <= 7) {
-        if (board[i][j] === ' ') {
+        if (boardToCheck[i][j] === ' ') {
             validPositions.push([i, j]);
-        } else if (opponent.includes(board[i][j])) {
+        } else if (opponent.includes(boardToCheck[i][j])) {
             validPositions.push([i, j]);
             break;
         } else {
@@ -406,9 +440,9 @@ function checkDiagonalSliding(x, y, opponent, validPositions) {
     i = x + 1;
     j = y - 1;
     while (i <= 7 && j >= 0) {
-        if (board[i][j] === ' ') {
+        if (boardToCheck[i][j] === ' ') {
             validPositions.push([i, j]);
-        } else if (opponent.includes(board[i][j])) {
+        } else if (opponent.includes(boardToCheck[i][j])) {
             validPositions.push([i, j]);
             break;
         } else {
@@ -421,9 +455,9 @@ function checkDiagonalSliding(x, y, opponent, validPositions) {
     i = x + 1;
     j = y + 1;
     while (i <= 7 && j <= 7) {
-        if (board[i][j] === ' ') {
+        if (boardToCheck[i][j] === ' ') {
             validPositions.push([i, j]);
-        } else if (opponent.includes(board[i][j])) {
+        } else if (opponent.includes(boardToCheck[i][j])) {
             validPositions.push([i, j]);
             break;
         } else {
@@ -435,7 +469,7 @@ function checkDiagonalSliding(x, y, opponent, validPositions) {
 }
 
 // Check l-shaped moves for validity
-function checkKnightMoves(x, y, opponent, validPositions) {
+function checkKnightMoves(x, y, opponent, validPositions, tempBoard) {
     // L shaped movesets
     const knightMoves = [
         [x - 2, y - 1],
@@ -448,9 +482,14 @@ function checkKnightMoves(x, y, opponent, validPositions) {
         [x + 2, y + 1]
     ];
 
+    let boardToCheck = board;
+    if (tempBoard) {
+        boardToCheck = tempBoard;
+    }
+
     knightMoves.forEach(([i, j]) => {
         if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
-            if (board[i][j] === ' ' || opponent.includes(board[i][j])) {
+            if (boardToCheck[i][j] === ' ' || opponent.includes(boardToCheck[i][j])) {
                 validPositions.push([i, j]);
             }
         }
@@ -474,50 +513,29 @@ function checkPawnMoves(x, y, opponent, validPositions, tempBoard) {
     let diagR = opponent === black ? diagRUp : diagRDown;
     let bounds = opponent === black ? x > 0 : x < 7;
     let start = opponent === black ? 6 : 1;
+
+    let boardToCheck = board;
+    if (tempBoard) {
+        boardToCheck = tempBoard;
+    }
     
-    if (!tempBoard) {
-        // Check pawn possible positions
-        if (x === start) {
-            if (board[forward2[0]][forward2[1]] === ' ' && board[forward1[0]][forward1[1]] === ' ') {
-                validPositions.push(forward2);
-            }
+    // Check pawn possible positions
+    if (x === start) {
+        if (boardToCheck[forward2[0]][forward2[1]] === ' ' && boardToCheck[forward1[0]][forward1[1]] === ' ') {
+            validPositions.push(forward2);
         }
+    }
 
-        if (bounds) {
-            if (board[forward1[0]][forward1[1]] === ' ') {
-                validPositions.push(forward1);
-            }
-            if (board[diagL[0]][diagL[1]] !== ' ' && opponent.includes(board[diagL[0]][diagL[1]])) {
-                validPositions.push(diagL);
-            }
-            if (board[diagR[0]][diagR[1]] !== ' ' && opponent.includes(board[diagR[0]][diagR[1]])) {
-                validPositions.push(diagR);
-            }
+    if (bounds) {
+        if (board[forward1[0]][forward1[1]] === ' ') {
+            validPositions.push(forward1);
         }
-    } else {
-        // Check pawn possible positions
-        console.log('Using tempboard');
-        console.log(tempBoard);
-
-        if (x === start) {
-            if (tempBoard[forward2[0]][forward2[1]] === ' ' && tempBoard[forward1[0]][forward1[1]] === ' ') {
-                validPositions.push(forward2);
-            }
+        if (boardToCheck[diagL[0]][diagL[1]] !== ' ' && opponent.includes(boardToCheck[diagL[0]][diagL[1]])) {
+            validPositions.push(diagL);
         }
-
-        if (bounds) {
-            if (tempBoard[forward1[0]][forward1[1]] === ' ') {
-                validPositions.push(forward1);
-            }
-            if (tempBoard[diagL[0]][diagL[1]] !== ' ' && opponent.includes(tempBoard[diagL[0]][diagL[1]])) {
-                validPositions.push(diagL);
-            }
-            if (tempBoard[diagR[0]][diagR[1]] !== ' ' && opponent.includes(tempBoard[diagR[0]][diagR[1]])) {
-                validPositions.push(diagR);
-            }
+        if (boardToCheck[diagR[0]][diagR[1]] !== ' ' && opponent.includes(boardToCheck[diagR[0]][diagR[1]])) {
+            validPositions.push(diagR);
         }
-
-        console.log(validPositions)
     }
 }
 
@@ -534,7 +552,6 @@ function checkKingMoves(x, y, opponent, validPositions, color) {
     kingMoves.forEach(([i, j]) => {
         if (i >= 0 && i <= 7 && j >= 0 && j <= 7) { 
             if (board[i][j] === ' ' || opponent.includes(board[i][j])) {
-                
                 let tempBoard = JSON.parse(JSON.stringify(board));
                 tempBoard[i][j] = board[x][y];
                 tempBoard[x][y] = ' ';
@@ -573,14 +590,14 @@ function getValidMoves(piece, pos, color, tempBoard) {
             checkKnightMoves(x, y, opponent, validPositions);
             break;
         case 'r':
-            checkSliding(x, y, opponent, validPositions);
+            checkSliding(x, y, opponent, validPositions, tempBoard);
             break;
         case 'b':
-            checkDiagonalSliding(x, y, opponent, validPositions);
+            checkDiagonalSliding(x, y, opponent, validPositions, tempBoard);
             break;
         case 'q':
-            checkSliding(x, y, opponent, validPositions);
-            checkDiagonalSliding(x, y, opponent, validPositions);
+            checkSliding(x, y, opponent, validPositions, tempBoard);
+            checkDiagonalSliding(x, y, opponent, validPositions, tempBoard);
             break;
     }
 
@@ -713,11 +730,9 @@ function removeValidMoves() {
 
 // Loop through board array and draw in the pieces, check if in check and if a pawn can be promoted
 function drawBoard() {
-    // whiteInCheck = inCheck(board, 'white', false);
+    whiteInCheck = inCheck(board, 'white', false);
     blackInCheck = inCheck(board, 'black', false);
     promotePawns();
-    // console.log(`White: ${whiteInCheck}`);
-    // console.log(`Black ${blackInCheck}`)
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
             let piece = board[i][j];
@@ -729,6 +744,30 @@ function drawBoard() {
             img.className = 'piece';
             square.innerHTML = '';
 
+            let status = document.getElementById('status');
+
+            if (whiteInCheck) {
+                status.innerHTML = 'Jaque: Blanco!';
+            }
+
+            if (blackInCheck) {
+                status.innerHTML = 'Jaque: Negro!';
+            }
+
+            if (!whiteInCheck && !blackInCheck) {
+                status.innerHTML = 'Jaque: ';
+            }
+
+            if (checkmate) {
+                let winText = `${winner} gana! Perdiste!`;
+
+                if (winner === 'White') {
+                    winText = 'Ganaste!';
+                }
+
+                status.innerHTML = `Jaque Mate! ${winText}`;
+            }
+
             switch (piece) {
                 case 'P': 
                     img.src = './images/B_Pawn.png'; 
@@ -737,10 +776,12 @@ function drawBoard() {
                 case 'p': 
                     img.src = './images/W_Pawn.png'; 
                     square.appendChild(img);
-                    img.addEventListener('click', function handlePieceClick() {
-                        showValidMoves(piece, pos);
-                        img.removeEventListener('click', handlePieceClick);
-                    });
+                    if (!checkmate) {
+                        img.addEventListener('click', function handlePieceClick() {
+                            showValidMoves(piece, pos);
+                            img.removeEventListener('click', handlePieceClick);
+                        });
+                    }
                     break;
                 case 'R': 
                     img.src = './images/B_Rook.png'; 
@@ -749,10 +790,12 @@ function drawBoard() {
                 case 'r': 
                     img.src = './images/W_Rook.png'; 
                     square.appendChild(img);
-                    img.addEventListener('click', function handlePieceClick() {
-                        showValidMoves(piece, pos);
-                        img.removeEventListener('click', handlePieceClick);
-                    });
+                    if (!checkmate) {
+                        img.addEventListener('click', function handlePieceClick() {
+                            showValidMoves(piece, pos);
+                            img.removeEventListener('click', handlePieceClick);
+                        });
+                    }
                     break;
                 case 'N': 
                     img.src = './images/B_Knight.png'; 
@@ -761,10 +804,12 @@ function drawBoard() {
                 case 'n': 
                     img.src = './images/W_Knight.png'; 
                     square.appendChild(img);
-                    img.addEventListener('click', function handlePieceClick() {
-                        showValidMoves(piece, pos);
-                        img.removeEventListener('click', handlePieceClick);
-                    });
+                    if (!checkmate) {
+                        img.addEventListener('click', function handlePieceClick() {
+                            showValidMoves(piece, pos);
+                            img.removeEventListener('click', handlePieceClick);
+                        });
+                    }
                     break;
                 case 'B': 
                     img.src = './images/B_Bishop.png'; 
@@ -773,10 +818,12 @@ function drawBoard() {
                 case 'b': 
                     img.src = './images/W_Bishop.png'; 
                     square.appendChild(img);
-                    img.addEventListener('click', function handlePieceClick() {
-                        showValidMoves(piece, pos);
-                        img.removeEventListener('click', handlePieceClick);
-                    });
+                    if (!checkmate) {
+                        img.addEventListener('click', function handlePieceClick() {
+                            showValidMoves(piece, pos);
+                            img.removeEventListener('click', handlePieceClick);
+                        });
+                    }
                     break;
                 case 'Q': 
                     img.src = './images/B_Queen.png'; 
@@ -785,10 +832,12 @@ function drawBoard() {
                 case 'q': 
                     img.src = './images/W_Queen.png'; 
                     square.appendChild(img);
-                    img.addEventListener('click', function handlePieceClick() {
-                        showValidMoves(piece, pos);
-                        img.removeEventListener('click', handlePieceClick);
-                    });
+                    if (!checkmate) {
+                        img.addEventListener('click', function handlePieceClick() {
+                            showValidMoves(piece, pos);
+                            img.removeEventListener('click', handlePieceClick);
+                        });
+                    }
                     break;
                 case 'K': 
                     img.src = './images/B_King.png'; 
@@ -797,14 +846,14 @@ function drawBoard() {
                 case 'k': 
                     img.src = './images/W_King.png'; 
                     square.appendChild(img);
-                    img.addEventListener('click', function handlePieceClick() {
-                        showValidMoves(piece, pos);
-                        img.removeEventListener('click', handlePieceClick);
-                    });
+                    if (!checkmate) {
+                        img.addEventListener('click', function handlePieceClick() {
+                            showValidMoves(piece, pos);
+                            img.removeEventListener('click', handlePieceClick);
+                        });
+                    }
                     break;
             }
-
-
         }
     }
 }
