@@ -47,6 +47,14 @@ function inCheck(board, color, futurePos) {
         }
     }
 
+    if (whiteInCheck) {
+        console.log('WHITE')
+    }
+
+    if (blackInCheck) {
+        console.log("BLACK")
+    }
+
     return false;
 }
 
@@ -62,69 +70,137 @@ function findKing(color) {
     }
 }
 
+function findAttackers(color, kingPos) {
+    let attackers = [];
+    let [kingRow, kingCol] = kingPos;
+
+    // Check all opponent's pieces for possible attacks
+    for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board[i].length; j++) {
+            if (color === 'white' && black.includes(board[i][j])) {
+                let validMoves = getValidMoves(board[i][j], [i, j], 'black');
+                for (let move of validMoves) {
+                    let [endRow, endCol] = move;
+                    if (endRow === kingRow && endCol === kingCol) {
+                        attackers.push([i, j]);
+                    }
+                }
+            } else if (color === 'black' && white.includes(board[i][j])) {
+                let validMoves = getValidMoves(board[i][j], [i, j], 'white');
+                for (let move of validMoves) {
+                    let [endRow, endCol] = move;
+                    if (endRow === kingRow && endCol === kingCol) {
+                        attackers.push([i, j]);
+                    }
+                }
+            }
+        }
+    }
+
+    if (attackers.length >= 2) {
+        console.log('CHECKMATE MULT ATTACKERS')
+    }
+
+    return attackers;
+}
+
 function makeRandomMoveBlack() {
     let blackPiecesIndexes = [];
 
+    // Find all black pieces and their indexes
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
-        if (black.includes(board[i][j])) {
-            blackPiecesIndexes.push([i, j]);
-        }
-        }
-    }
-
-    // Select a random black piece
-    let randomPiece = blackPiecesIndexes[Math.floor(Math.random() * blackPiecesIndexes.length)];
-    let pieceType = board[randomPiece[0]][randomPiece[1]];
-    let startRow = randomPiece[0];
-    let startCol = randomPiece[1];
-
-    if (blackInCheck) {
-        pieceType = 'K';
-        let kingLoc = findKing('black');
-        randomPiece = kingLoc;
-        startRow = kingLoc[0];
-        startCol = kingLoc[1];
-    }
-
-    let validMoves = getValidMoves(pieceType, randomPiece, 'black');
-
-    let randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-    if (randomMove === undefined) {
-        makeRandomMoveBlack();
-    } else {
-        let endRow = randomMove[0];
-        let endCol = randomMove[1];
-
-        // Attack white if possible
-        validMoves.forEach((move) => {
-            let x = move[0];
-            let y = move[1];
-
-            if (white.includes(board[x][y])) {
-                endRow = x;
-                endCol = y;
+            if (black.includes(board[i][j])) {
+                blackPiecesIndexes.push([i, j]);
             }
-        })
+        }
+    }
 
-        // If in check, see if move puts king in check
-        if (blackInCheck) {
-            validMoves.forEach((move) => {
-                let check = inCheck(board, 'black', move);
-                //console.log(`Would be in Check: ${check}, Move: ${move}`)
-                if (!check) {
-                    let x = move[0];
-                    let y = move[1];
-                    endRow = x;
-                    endCol = y;
-                } else {
-                    console.log('CHECKMATE')
+    // If black is in check, try to respond to it
+    if (blackInCheck) {
+        let kingPos = findKing('black'); 
+        let [kingRow, kingCol] = kingPos;
+
+        // Try blocking the check
+
+
+        // Try capturing the attacking piece
+        let attackers = findAttackers('black', kingPos);
+        let attacker = attackers[0];
+        let attackerRow = attacker[0];
+        let attackerCol = attacker[1];
+
+        for (let i = 0; i < blackPiecesIndexes.length; i++) {
+            let [startRow, startCol] = blackPiecesIndexes[i];
+            let piece = board[startRow][startCol];
+            let validMoves = getValidMoves(piece, [startRow, startCol], 'black');
+    
+            for (let move of validMoves) {
+                let [endRow, endCol] = move;
+                console.log(attacker)
+                console.log(attackerRow, attackerCol)
+                if (white.includes(board[endRow][endCol])) {
+                    if (endRow == attackerRow && endCol == attackerCol)
+                    movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                    return;
                 }
-            });
+            }
         }
 
-        movePieceBlack(pieceType, startRow, startCol, endRow, endCol)
+        // Try moving the king out of check
+        let validKingMoves = getValidMoves(board[kingRow][kingCol], kingPos, 'black');
+        for (let move of validKingMoves) {
+            let [endRow, endCol] = move;
+            let tempBoard = JSON.parse(JSON.stringify(board));
+            tempBoard[endRow][endCol] = tempBoard[kingRow][kingCol];
+            tempBoard[kingRow][kingCol] = ' ';
+            if (!inCheck(tempBoard, 'black', [endRow, endCol])) {
+                blackInCheck = false;
+                movePieceBlack(board[kingRow][kingCol], kingRow, kingCol, endRow, endCol);
+                console.log("CHECKMATE");
+                return;
+            }
+        }
+
+
     }
+
+    // If not in check or no valid move to get out of check, look for an attacking move
+    for (let i = 0; i < blackPiecesIndexes.length; i++) {
+        let [startRow, startCol] = blackPiecesIndexes[i];
+        let piece = board[startRow][startCol];
+        let validMoves = getValidMoves(piece, [startRow, startCol], 'black');
+
+        for (let move of validMoves) {
+            let [endRow, endCol] = move;
+            if (white.includes(board[endRow][endCol])) {
+                movePieceBlack(piece, startRow, startCol, endRow, endCol);
+                return;
+            }
+        }
+    }
+
+    // If no attacking move found, make a random move
+    function makeRandomMove() {
+        let randomIndex = Math.floor(Math.random() * blackPiecesIndexes.length);
+        let [startRow, startCol] = blackPiecesIndexes[randomIndex];
+        let piece = board[startRow][startCol];
+        let validMoves = getValidMoves(piece, [startRow, startCol], 'black');
+        let randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+    
+        if (randomMove === undefined) {
+            console.log(randomMove)
+            makeRandomMove();
+        } else {
+            let endRow = randomMove[0];
+            let endCol = randomMove[1];
+        
+            movePieceBlack(piece, startRow, startCol, endRow, endCol);
+        }
+    }
+
+    makeRandomMove();
+
 }
 
 function checkSliding(x, y, opponent, validPositions) {
@@ -466,10 +542,10 @@ function removeValidMoves() {
 }
 
 function drawBoard() {
-    //whiteInCheck = inCheck(board, 'white', false);
-    //blackInCheck = inCheck(board, 'black', false);
-    //console.log(`White: ${whiteInCheck}`);
-    //console.log(`Black ${blackInCheck}`)
+    whiteInCheck = inCheck(board, 'white', false);
+    blackInCheck = inCheck(board, 'black', false);
+    // console.log(`White: ${whiteInCheck}`);
+    // console.log(`Black ${blackInCheck}`)
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
             let piece = board[i][j];
@@ -490,9 +566,7 @@ function drawBoard() {
                     img.src = './images/W_Pawn.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
-                        if (!whiteInCheck) {
-                            showValidMoves(piece, pos);
-                        }
+                        showValidMoves(piece, pos);
                         img.removeEventListener('click', handlePieceClick);
                     });
                     break;
@@ -504,9 +578,7 @@ function drawBoard() {
                     img.src = './images/W_Rook.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
-                        if (!whiteInCheck) {
-                            showValidMoves(piece, pos);
-                        }
+                        showValidMoves(piece, pos);
                         img.removeEventListener('click', handlePieceClick);
                     });
                     break;
@@ -518,9 +590,7 @@ function drawBoard() {
                     img.src = './images/W_Knight.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
-                        if (!whiteInCheck) {
-                            showValidMoves(piece, pos);
-                        }
+                        showValidMoves(piece, pos);
                         img.removeEventListener('click', handlePieceClick);
                     });
                     break;
@@ -532,9 +602,7 @@ function drawBoard() {
                     img.src = './images/W_Bishop.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
-                        if (!whiteInCheck) {
-                            showValidMoves(piece, pos);
-                        }
+                        showValidMoves(piece, pos);
                         img.removeEventListener('click', handlePieceClick);
                     });
                     break;
@@ -546,9 +614,7 @@ function drawBoard() {
                     img.src = './images/W_Queen.png'; 
                     square.appendChild(img);
                     img.addEventListener('click', function handlePieceClick() {
-                        if (!whiteInCheck) {
-                            showValidMoves(piece, pos);
-                        }
+                        showValidMoves(piece, pos);
                         img.removeEventListener('click', handlePieceClick);
                     });
                     break;
