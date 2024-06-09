@@ -23,8 +23,6 @@ let whiteInCheck = false;
 function inCheck(boardToCheck, color, kingPos) {
     let opponentColor = (color === 'white') ? 'black' : 'white';
 
-    console.log(kingPos)
-
     // Check for opponent's pieces threatening the king
     for (let i = 0; i < boardToCheck.length; i++) {
         for (let j = 0; j < boardToCheck[i].length; j++) {
@@ -579,7 +577,15 @@ function makeRandomMoveBlack() {
                 tempBoard[endRow][endCol] = board[kingRow][kingCol];
                 tempBoard[kingRow][kingCol] = ' ';
 
-                if (!inCheck(tempBoard, 'black', kingPos) && canTakeAction) {
+                let wouldBeInCheck = inCheck(tempBoard, 'black', kingPos);
+
+                if (wouldBeInCheck) {
+                    checkmate = true;
+                    winner = 'Black';
+                    canTakeAction = false;
+                }
+
+                if (!wouldBeInCheck && canTakeAction) {
                     canTakeAction = false;
                     console.log('RAN RETREAT')
                     movePieceBlack(board[kingRow][kingCol], kingRow, kingCol, endRow, endCol);
@@ -685,12 +691,132 @@ function promotePawns() {
     }
 }
 
+// Validate if white in checkmate
+function whiteInCheckmate() {
+    let whitePiecesIndexes = [];
+
+    // Find all white pieces and their indexes
+    for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board[i].length; j++) {
+            if (white.includes(board[i][j])) {
+                whitePiecesIndexes.push([i, j]);
+            }
+        }
+    }
+
+    // If white is in check, attempt to get out
+    if (whiteInCheck) {
+        let kingPos = findKing('white'); 
+        let [kingRow, kingCol] = kingPos;
+
+        let canTakeAction = true;
+
+        // Try capturing the attacking piece
+        let attackers = findAttackers('white', kingPos);
+        let attacker = attackers[0];
+        let attackerRow = attacker[0];
+        let attackerCol = attacker[1];
+
+        if (canTakeAction) {
+            // Try capturing the attacking piece
+            for (let i = 0; i < whitePiecesIndexes.length; i++) {
+                let [startRow, startCol] = whitePiecesIndexes[i];
+                let piece = board[startRow][startCol];
+                let piecePos = [startRow, startCol];
+                let validMoves = getValidMoves(piece, piecePos, 'white', board);
+            
+                for (let move of validMoves) {
+                    let [endRow, endCol] = move;
+                    if (black.includes(board[endRow][endCol])) {
+                        if (endRow == attackerRow && endCol == attackerCol && canTakeAction) {
+                            let tempBoard = JSON.parse(JSON.stringify(board));
+                            tempBoard[endRow][endCol] = board[startRow][startCol];
+                            tempBoard[startRow][startCol] = ' ';
+
+                            if (!inCheck(tempBoard, 'white', kingPos) && canTakeAction) {
+                                console.log('1')
+                                canTakeAction = false;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (canTakeAction) {
+            // Try blocking the check
+             if (board[attacker[0]][attacker[1]] !== 'n') { // No way to block knights
+                let blockableSquares = getPathBetweenPositions(attacker, kingPos);
+
+                for (let i = 0; i < whitePiecesIndexes.length; i++) {
+                    let [startRow, startCol] = whitePiecesIndexes[i];
+                    let piece = board[startRow][startCol];
+                    let piecePos = [startRow, startCol];
+                    let validMoves = getValidMoves(piece, piecePos, 'white', board);
+                
+                    for (let move of validMoves) {
+                        let [endRow, endCol] = move;
+                        let tempBoard = JSON.parse(JSON.stringify(board));
+                        tempBoard[endRow][endCol] = board[startRow][startCol];
+                        tempBoard[startRow][startCol] = ' ';
+
+                        blockableSquares.forEach((square) => {
+                            if (endRow == square[0] && endCol == square[1] && piece !== 'k' && canTakeAction) {
+                                if (!inCheck(tempBoard, 'white', kingPos) && canTakeAction) {
+                                    console.log('2')
+                                    canTakeAction = false;
+                                    return;
+                                }
+                            } 
+                        })
+                    }
+                }
+            }
+        }
+
+        if (canTakeAction) {
+            // Try moving the king out of check
+            let validKingMoves = getValidMoves(board[kingRow][kingCol], kingPos, 'white', board);
+            for (let move of validKingMoves) {
+                let [endRow, endCol] = move;
+                let tempBoard = JSON.parse(JSON.stringify(board));
+                tempBoard[endRow][endCol] = board[kingRow][kingCol];
+                tempBoard[kingRow][kingCol] = ' ';
+
+                let wouldBeInCheck = inCheck(tempBoard, 'white', kingPos);
+
+                if (wouldBeInCheck) {
+                    checkmate = true;
+                    winner = 'Black';
+                    canTakeAction = false;
+                }
+
+                if (!wouldBeInCheck && canTakeAction) {
+                    console.log('3')
+                    canTakeAction = false;
+                    return;
+                }
+            }
+        }
+
+        // Black in checkmate
+        if (canTakeAction) {
+            checkmate = true;
+            winner = 'Black';
+            drawBoard();
+        }
+
+    }
+}
+
 // Function to draw the board
 function drawBoard() {
     let whiteKingPos = findKing('white');
     let blackKingPos = findKing('black');
     whiteInCheck = inCheck(board, 'white', whiteKingPos);
     blackInCheck = inCheck(board, 'black', blackKingPos);
+    whiteInCheckmate();
     promotePawns();
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
@@ -706,11 +832,11 @@ function drawBoard() {
             let status = document.getElementById('status');
 
             if (whiteInCheck) {
-                status.innerHTML = 'Jaque: Blanco!';
+                status.innerHTML = 'Jaque: Jugador blanco!';
             }
 
             if (blackInCheck) {
-                status.innerHTML = 'Jaque: Negro!';
+                status.innerHTML = 'Jaque: Jugador negro!';
             }
 
             if (!whiteInCheck && !blackInCheck) {
@@ -718,7 +844,7 @@ function drawBoard() {
             }
 
             if (checkmate) {
-                let winText = `${winner} gana! Perdiste!`;
+                let winText = `Jugador negro gana! Perdiste!`;
 
                 if (winner === 'White') {
                     winText = 'Ganaste!';
@@ -818,3 +944,8 @@ function drawBoard() {
 }
 
 drawBoard();
+
+// Current bugs:
+// King cant move in front of pawns
+// Enemy king can retreat into check
+// Sometimes running a random move results in no move being made
