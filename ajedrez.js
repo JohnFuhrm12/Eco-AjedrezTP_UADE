@@ -577,13 +577,7 @@ function makeRandomMoveBlack() {
                 tempBoard[endRow][endCol] = board[kingRow][kingCol];
                 tempBoard[kingRow][kingCol] = ' ';
 
-                let wouldBeInCheck = inCheck(tempBoard, 'black', kingPos);
-
-                if (wouldBeInCheck) {
-                    checkmate = true;
-                    winner = 'Black';
-                    canTakeAction = false;
-                }
+                let wouldBeInCheck = inCheck(tempBoard, 'black', move);
 
                 if (!wouldBeInCheck && canTakeAction) {
                     canTakeAction = false;
@@ -661,6 +655,8 @@ function makeRandomMoveBlack() {
                 if (!inCheck(tempBoard, 'black', kingPos)) {
                     movePieceBlack(piece, startRow, startCol, endRow, endCol);
                     return;
+                } else {
+                    makeRandomMove();
                 }
             }
         }
@@ -785,12 +781,6 @@ function whiteInCheckmate() {
                 tempBoard[kingRow][kingCol] = ' ';
 
                 let wouldBeInCheck = inCheck(tempBoard, 'white', kingPos);
-
-                if (wouldBeInCheck) {
-                    checkmate = true;
-                    winner = 'Black';
-                    canTakeAction = false;
-                }
 
                 if (!wouldBeInCheck && canTakeAction) {
                     console.log('3')
@@ -949,3 +939,4 @@ drawBoard();
 // King cant move in front of pawns
 // Enemy king can retreat into check
 // Sometimes running a random move results in no move being made
+// Sometimes can go thorugh many random moves without finding a valid one in time
