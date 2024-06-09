@@ -125,6 +125,10 @@ a:hover {
 }
 
 @media (max-width: 750px) {
+  h1 {
+    margin-top: 0px;
+  }
+
   #desc {
     width: 90%;
     margin: 0 auto;
@@ -136,12 +140,12 @@ a:hover {
     max-width: 100%;
   }
 
-  .square {
-    width: 54px;
-    height: 54px;
+  #board {
+    border: solid 3px rgb(77, 91, 54);
   }
 
-  h1 {
-    margin-top: 0px;
+  .square {
+    width: 46px;
+    height: 46px;
   }
 }
