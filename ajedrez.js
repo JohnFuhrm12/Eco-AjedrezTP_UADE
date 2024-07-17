@@ -465,6 +465,14 @@ function findAttackers(color, kingPos) {
         }
     }
 
+    if (attackers.length > 1) {
+        // Black in checkmate
+        checkmate = true;
+        winner = 'White';
+        drawBoard();
+        return;
+    }
+
     return attackers;
 }
 
@@ -631,9 +639,12 @@ function makeRandomMoveBlack() {
                     kingPos = [endRow, endCol];
                 }
 
+                console.log(kingPos)
+
                 if (white.includes(board[endRow][endCol])) {
                     if (!inCheck(tempBoard, 'black', kingPos)) {
-                        // console.log('RAN RANDOM ATTACK')
+                        // PUT KING IN CHECK!!!
+                        console.log('RAN RANDOM ATTACK')
                         movePieceBlack(piece, startRow, startCol, endRow, endCol);
                         return;
                     }
@@ -650,7 +661,7 @@ function makeRandomMoveBlack() {
             let validMoves = getValidMoves(piece, piecePos, 'black', board);
             let randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
 
-            // console.log('RAN RANDOM')
+            console.log('RAN RANDOM')
         
             if (randomMove === undefined) {
                 makeRandomMove();
@@ -667,28 +678,37 @@ function makeRandomMoveBlack() {
                 }
 
                 if (!inCheck(tempBoard, 'black', kingPos)) {
+                    console.log("RAN RANDOM")
                     movePieceBlack(piece, startRow, startCol, endRow, endCol);
                     return;
                 } else {
                     // Look for the first valid move
+                    console.log('ATTEMPTING FIRST VALID')
                     for (let i = 0; i < blackPiecesIndexes.length; i++) {
                         let [startRow, startCol] = blackPiecesIndexes[i];
                         let piece = board[startRow][startCol];
                         let piecePos = [startRow, startCol];
                         let validMoves = getValidMoves(piece, piecePos, 'black', board);
 
+                        console.log(piece)
+
                         for (let move of validMoves) {
                             let [endRow, endCol] = move;
                             let tempBoard = JSON.parse(JSON.stringify(board));
-                            tempBoard[endRow][endCol] = board[startRow][startCol];
+                            tempBoard[endRow][endCol] = piece;
                             tempBoard[startRow][startCol] = ' ';
+
+                            console.log(tempBoard)
 
                             if (piece === 'K') {
                                 kingPos = [endRow, endCol];
                             }
 
+                            console.log(kingPos);
+                            console.log(!inCheck(tempBoard, 'black', kingPos))
+
                             if (!inCheck(tempBoard, 'black', kingPos)) {
-                                // console.log('RAN RANDOM ATTACK')
+                                console.log('RAN FIRST VALID')
                                 movePieceBlack(piece, startRow, startCol, endRow, endCol);
                                 return;
                             }
@@ -858,11 +878,11 @@ function drawBoard() {
             let status = document.getElementById('status');
 
             if (whiteInCheck) {
-                status.innerHTML = 'Jaque: Jugador blanco!';
+                status.innerHTML = 'Jaque: Planeta Tierra!';
             }
 
             if (blackInCheck) {
-                status.innerHTML = 'Jaque: Jugador negro!';
+                status.innerHTML = 'Jaque: Calentamiento Global!';
             }
 
             if (!whiteInCheck && !blackInCheck) {
@@ -870,10 +890,10 @@ function drawBoard() {
             }
 
             if (checkmate) {
-                let winText = `Jugador negro gana! Perdiste!`;
+                let winText = `Calentamiento Global gana! Perdiste!`;
 
                 if (winner === 'White') {
-                    winText = 'Ganaste!';
+                    winText = 'Lograste proteger al Planeta Tierra!';
                 }
 
                 status.innerHTML = `Jaque Mate! ${winText}`;
@@ -881,11 +901,11 @@ function drawBoard() {
 
             switch (piece) {
                 case 'P': 
-                    img.src = './images/B_Pawn.png'; 
+                    img.src = './images/antieco/fire2.png'; 
                     square.appendChild(img);
                     break
                 case 'p': 
-                    img.src = './images/W_Pawn.png'; 
+                    img.src = './images/eco/sprout.png'; 
                     square.appendChild(img);
                     if (!checkmate) {
                         img.addEventListener('click', function handlePieceClick() {
@@ -895,11 +915,11 @@ function drawBoard() {
                     }
                     break;
                 case 'R': 
-                    img.src = './images/B_Rook.png'; 
+                    img.src = './images/antieco/bulldozer.png'; 
                     square.appendChild(img);
                     break
                 case 'r': 
-                    img.src = './images/W_Rook.png'; 
+                    img.src = './images/eco/tree.png'; 
                     square.appendChild(img);
                     if (!checkmate) {
                         img.addEventListener('click', function handlePieceClick() {
@@ -909,11 +929,11 @@ function drawBoard() {
                     }
                     break;
                 case 'N': 
-                    img.src = './images/B_Knight.png'; 
+                    img.src = './images/antieco/marine.png'; 
                     square.appendChild(img);
                     break
                 case 'n': 
-                    img.src = './images/W_Knight.png'; 
+                    img.src = './images/eco/panda.png'; 
                     square.appendChild(img);
                     if (!checkmate) {
                         img.addEventListener('click', function handlePieceClick() {
@@ -923,11 +943,11 @@ function drawBoard() {
                     }
                     break;
                 case 'B': 
-                    img.src = './images/B_Bishop.png'; 
+                    img.src = './images/antieco/chainsaw.png'; 
                     square.appendChild(img);
                     break
                 case 'b': 
-                    img.src = './images/W_Bishop.png'; 
+                    img.src = './images/eco/energy.png'; 
                     square.appendChild(img);
                     if (!checkmate) {
                         img.addEventListener('click', function handlePieceClick() {
@@ -937,11 +957,11 @@ function drawBoard() {
                     }
                     break;
                 case 'Q': 
-                    img.src = './images/B_Queen.png'; 
+                    img.src = './images/antieco/oil.png'; 
                     square.appendChild(img);
                     break
                 case 'q': 
-                    img.src = './images/W_Queen.png'; 
+                    img.src = './images/eco/recycle2.png'; 
                     square.appendChild(img);
                     if (!checkmate) {
                         img.addEventListener('click', function handlePieceClick() {
@@ -951,11 +971,11 @@ function drawBoard() {
                     }
                     break;
                 case 'K': 
-                    img.src = './images/B_King.png'; 
+                    img.src = './images/antieco/factory.png'; 
                     square.appendChild(img);
                     break
                 case 'k': 
-                    img.src = './images/W_King.png'; 
+                    img.src = './images/eco/earth2.png'; 
                     square.appendChild(img);
                     if (!checkmate) {
                         img.addEventListener('click', function handlePieceClick() {
